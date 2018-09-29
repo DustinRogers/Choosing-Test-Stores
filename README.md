@@ -1,15 +1,3 @@
----
-title: "Determining Optimal Test Stores"
-author: "Dustin Rogers"
-date: "September 29, 2018"
-output:
-      html_document:
-        keep_md: true
----
-
-
-
-
 ####Load Data and look at data structure
 
 ```r
