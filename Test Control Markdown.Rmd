@@ -1,0 +1,172 @@
+---
+title: "Determining Optimal Test Stores"
+author: "Dustin Rogers"
+date: "September 29, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r initialize, include=FALSE}
+library(ggplot2)        # plotting & data
+library(dplyr)          # data manipulation
+library(tidyr)          # data re-shaping
+library(magrittr)       # pipe operator
+library(gridExtra)      # provides side-by-side plotting
+library(readxl)
+library(MatchIt)
+library(kableExtra)
+library(knitr)
+library(plyr)
+```
+####Load Data and look at data structure
+```{r}
+setwd("C:\\Users\\user\\Documents\\Datalore Projects\\Test Control Stores\\")
+test_cntl <- read.csv("Test Control Stores.csv",stringsAsFactors=FALSE)
+str(test_cntl)
+
+
+```
+####We can see that the naming conventions are quite poor so I will change those. Also some of the data that should have loaded as numerical actually loaded as chararters. I will fix this too.
+```{r warning=FALSE}
+test_cntl <- test_cntl%>%
+  rename_all(.funs = funs(sub(c("*Sum.of.Customer."), "", names(test_cntl))))
+test_cntl <- test_cntl%>%
+  rename_all(.funs = funs(sub(c("*Max.of."), "", names(test_cntl))))
+numeric_feats <-names(test_cntl[sapply(test_cntl, function(x) length(unique(x)))>12])
+test_cntl[numeric_feats] <- lapply(test_cntl[numeric_feats], as.numeric)
+```
+#### Next I check null values and see that there are 6 rows that are all missing demographic data.
+```{r echo=FALSE}
+kable(colSums(sapply(test_cntl,is.na)))%>%
+    kable_styling(bootstrap_options = c("striped", "hover"))
+nulls<-test_cntl[is.na(test_cntl$Max.of.AGG.HOME.VALUES),]
+```                  
+#### I have decided to impute the mean value for the rows null values since my data set is already so small. 
+```{r warning=FALSE}
+for (x in numeric_feats) {   
+  mean_value <- mean(test_cntl[[x]],na.rm = TRUE)
+  test_cntl[[x]][is.na(test_cntl[[x]])] <- mean_value
+}
+```
+#### Next I look at summary statistics for all my numeric data. I see that AGG.HOME.VALUES & INCOME.DENSITY are the total cost of all homes within a zip code. 
+```{r echo=FALSE, results='asis'}
+library(knitr)
+num_df <- test_cntl[numeric_feats]
+summary_stats <- data.frame(
+  Variable=colnames(num_df),
+  Mean=rapply(num_df,function(x)round(mean(x,na.rm = T),2)),
+  SD = rapply(num_df,function(x)round(sd(x,na.rm=T),2)),
+  Unique = rapply(num_df,function(x)length(unique(x)))
+)
+kable(summary_stats[2:4])%>%
+    kable_styling(bootstrap_options = c("striped", "hover"))
+```
+#### I created a function that randomly samples 20 stores and then compares their means to the remaining means using T-Tests until all the T-Tests have P-Values of 80% of higher. I did this to make sure that test group would be a representative sample of the entire population.
+```{r}
+random.sample <- function(x) {
+  success <- FALSE
+  while (!success) {
+    
+    test <- sample_n(test_cntl,20)
+    control <- setdiff(test_cntl,test)
+    
+    cov <- c('Sales..s','Gross.Margin..s','S.T..','MEDIAN.HOME.VALUE','MEDIAN.AGE')
+    
+    ttest <- ldply(cov,function(x) {
+      p_val = t.test(x=test[,x], y=control[,x])$p.value
+      return(data.frame(x=x,p_value=p_val))
+    })
+  
+    success <- all(ttest$p_value>.8)
+  }
+  test_stores <- test$StoreCode
+}
+
+test_stores<-random.sample(test_cntl)
+
+test_cntl<-test_cntl%>%
+  mutate(Status_2=case_when(StoreCode %in% test_stores ~ 1,
+                            TRUE ~ 0
+                            ))
+```
+
+####Look at difference in means between current test/control groups. The first table represents the newly picked test stores vs. the remain 105 stores. The second table represent the prechosen control and test stores.
+```{r echo=FALSE, warning=FALSE, results='asis'}
+test_cntl<-test_cntl%>%
+  mutate(Status_3=case_when(Status_2== 1 ~ 'Test',
+                            TRUE ~ 'Control'))
+
+test_cntl %>%
+  group_by(Status_3) %>%
+  select(one_of(numeric_feats)) %>%
+  summarise_all(funs(mean(., na.rm = T)))%>%
+    kable()%>%
+    kable_styling(bootstrap_options = c("striped", "hover"))
+
+test_cntl %>%
+  filter(Status!='Other')%>%
+  group_by(Status) %>%
+  select(one_of(numeric_feats)) %>%
+  summarise_all(funs(mean(., na.rm = T)))%>%
+    kable()%>%
+    kable_styling(bootstrap_options = c("striped", "hover"))
+  
+```  
+
+####Next I run a t-test for each individual variables to determine if the control and test means are equal. The first table represents the newly picked test stores vs. the remain 105 stores. The second table represent the prechosen control and test stores.
+```{r echo=FALSE, warning=FALSE}
+cov <- c('Sales..s','Gross.Margin..s','S.T..',
+              'MEDIAN.HOME.VALUE','MEDIAN.AGE')
+test_cntl_only<-test_cntl%>%
+  filter(Status!='Other')
+
+ttest <- ldply(cov,function(x) {
+  t_val = t.test(test_cntl[,x] ~ test_cntl$Status_2)$statistic
+  p_val = t.test(test_cntl[,x] ~ test_cntl$Status_2)$p.value
+  return(data.frame(x=x, t_value=t_val,p_value=p_val))
+})
+ttest%>%
+    kable()%>%
+    kable_styling(bootstrap_options = c("striped", "hover"))
+
+ttest1 <- ldply(cov,function(x) {
+    t_val = t.test(test_cntl_only[,x] ~ test_cntl_only$Status)$statistic
+    p_val = t.test(test_cntl_only[,x] ~ test_cntl_only$Status)$p.value
+    return(data.frame(x=x, t_value=t_val,p_value=p_val))
+  })
+ttest1%>%
+    kable()%>%
+    kable_styling(bootstrap_options = c("striped", "hover"))
+```
+####Based on these results, the Sum.of.Customer.S.T.. is the only variable that has a significant difference in means at the 95% confidence level
+
+
+#### Next, I am going to use the matchit function to determine the optimal control stores based on the test stores that have already been chosen.
+```{r echo=FALSE, warning=FALSE}
+test_cntl<-test_cntl%>%
+  mutate(Status_2=case_when(Status=='Test' ~ 1,
+                            TRUE ~ 0))
+m.out<-matchit(Status_2~CustomerMarket+Sales..s+Gross.Margin..s+S.T..+
+          MEDIAN.HOME.VALUE+MEDIAN.AGE,method = "nearest", data=test_cntl, ratio=2)
+summary(m.out)
+```
+####With the new control groups given by the above matchit model, I used a t-test for each variable to determine if the control and test means were equal.
+```{r echo=FALSE, warning=FALSE}
+m.data <- match.data(m.out)
+cov <- c('Sales..s','Gross.Margin..s','S.T..','MEDIAN.HOME.VALUE','MEDIAN.AGE')
+m.data<-m.data%>%
+  mutate(Status_3=case_when(Status=='Test' ~ 1,
+                            TRUE ~ 0))
+
+ttest2 <- ldply(cov,function(x) {
+    t_val = t.test(m.data[,x] ~ m.data[, 'Status_3'])$statistic
+    p_val = t.test(m.data[,x] ~ m.data[, 'Status_3'])$p.value
+    return(data.frame(x=x, t_value=t_val,p_value=p_val))
+  })
+ttest2%>%
+    kable()%>%
+    kable_styling(bootstrap_options = c("striped", "hover"))
+```
