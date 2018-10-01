@@ -1,9 +1,11 @@
-### The project below shows two different methods of picking a test group and a control group for an A/B test. The company I am consulting with wants to know if sales will improve or decline if they remove a number of SKU's from the shelves of a test group of their stores.I was initially given a test group of 20 stores and told to find 20 controls stores that were similar in nature in order to have a unbiased comparison. I soon realized that after looking at the means of the pre-chosen test stores and means of the remaining 2015 stores that they were not a representative sample of the entire population. I then did two things.  
+### Choosing Optimal Test Groups for A/B Test
+
+##### The project below shows two different methods of picking a test group and a control group for an A/B test. The company I am consulting with wants to know if sales will improve or decline if they remove a number of SKU's from the shelves of a test group of their stores.I was initially given a test group of 20 stores and told to find 20 controls stores that were similar in nature in order to have a unbiased comparison. I soon realized that after looking at the means of the pre-chosen test stores and means of the remaining 2015 stores that they were not a representative sample of the entire population. I then did two things.  
 1. I used the R package _MatchIt_ to pick the 20 stores that had the most similar distribution across all covariates in the data set to the test stores covariates and then used t-tests to determine how close their means were.
 2. I created a function in R that picks 20 test stores that are closest to the population's distribution across all covariates in the data set. This will allow the company to use 105 stores as a control group rather than only 20.
 
 
-#### Load Data and look at data structure
+#### First I load the dataata and look at it's data structure
 
 ```r
 setwd("C:\\Users\\user\\Documents\\Datalore Projects\\Test Control Stores\\")
@@ -24,7 +26,7 @@ str(test_cntl)
 ##  $ Max.of.INCOME.DENSITY          : chr  "20526370" "78821928" "28587143" "52452386" ...
 ##  $ Max.of.MEDIAN.AGE              : chr  "32" "40" "28" "35" ...
 ```
-####We can see that the naming conventions are quite poor so I will change those. Also some of the data that should have loaded as numerical actually loaded as chararters. I will fix this too.
+#### We can see that the naming conventions are too verbose so I will change those. Additionally, some of the columns that should have loaded as numerical variables actually loaded as character variables. This needs to be fixed in order to analyze the data.
 
 ```r
 test_cntl <- test_cntl%>%
@@ -34,7 +36,7 @@ test_cntl <- test_cntl%>%
 numeric_feats <-names(test_cntl[sapply(test_cntl, function(x) length(unique(x)))>12])
 test_cntl[numeric_feats] <- lapply(test_cntl[numeric_feats], as.numeric)
 ```
-#### Next I check null values and see that there are 6 rows that are all missing demographic data.
+#### Next I check to see if the data has any null values. I see that there are 6 rows that are all missing demographic data.
 <table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
  <thead>
   <tr>
@@ -86,7 +88,6 @@ test_cntl[numeric_feats] <- lapply(test_cntl[numeric_feats], as.numeric)
 </tbody>
 </table>
 #### I have decided to impute the mean value for the rows null values since my data set is already so small. 
-
 ```r
 for (x in numeric_feats) {   
   mean_value <- mean(test_cntl[[x]],na.rm = TRUE)
@@ -184,7 +185,7 @@ test_cntl<-test_cntl%>%
                             ))
 ```
 
-####Look at difference in means between current test/control groups. The first table represents the newly picked test stores vs. the remain 105 stores. The second table represent the prechosen control and test stores.
+#### Look at difference in means between current test/control groups. The first table represents the newly picked test stores vs. the remain 105 stores. The second table represent the prechosen control and test stores.
 
 ```
 ## Adding missing grouping variables: `Status_3`
@@ -274,7 +275,7 @@ test_cntl<-test_cntl%>%
 </tbody>
 </table>
 
-####Next I run a t-test for each individual variables to determine if the control and test means are equal. The first table represents the newly picked test stores vs. the remain 105 stores. The second table represent the prechosen control and test stores.
+#### Next I run a t-test for each individual variables to determine if the control and test means are equal. The first table represents the newly picked test stores vs. the remain 105 stores. The second table represent the prechosen control and test stores.
 <table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
  <thead>
   <tr>
@@ -469,7 +470,7 @@ test_cntl<-test_cntl%>%
 ## Unmatched      65       0
 ## Discarded       0       0
 ```
-####With the new control groups given by the above matchit model, I used a t-test for each variable to determine if the control and test means were equal.
+#### With the new control groups given by the above matchit model, I used a t-test for each variable to determine if the control and test means were equal.
 <table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
  <thead>
   <tr>
