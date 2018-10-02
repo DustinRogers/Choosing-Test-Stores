@@ -32,13 +32,13 @@ test_cntl <- test_cntl%>%
 test_cntl <- test_cntl%>%
   rename_all(.funs = funs(sub(c("*Max.of."), "", names(test_cntl))))
 ```
-######## We can see that the naming conventions are too verbose so I will change those. Additionally, some of the columns that should have loaded as numerical variables actually loaded as character variables. This needs to be fixed in order to analyze the data.
+#### We can see that the naming conventions are too verbose so I will change those. Additionally, some of the columns that should have loaded as numerical variables actually loaded as character variables. This needs to be fixed in order to analyze the data.
 
 ```r
 numeric_feats <-names(test_cntl[sapply(test_cntl, function(x) length(unique(x)))>12])
 test_cntl[numeric_feats] <- lapply(test_cntl[numeric_feats], as.numeric)
 ```
-#### Next I check to see if the data has any null values. I see that there are 6 rows that are all missing demographic data.
+#### Next,  I check to see if the data has any null values. I see that there are 6 rows that are all missing demographic data.
 <table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
  <thead>
   <tr>
@@ -89,11 +89,6 @@ test_cntl[numeric_feats] <- lapply(test_cntl[numeric_feats], as.numeric)
   </tr>
 </tbody>
 </table>
-
-```
-## Warning in is.na(test_cntl$Max.of.AGG.HOME.VALUES): is.na() applied to non-
-## (list or vector) of type 'NULL'
-```
 #### I have decided to impute the mean value for the rows null values since my data set is already so small. 
 
 ```r
@@ -102,63 +97,6 @@ for (x in numeric_feats) {
   test_cntl[[x]][is.na(test_cntl[[x]])] <- mean_value
 }
 ```
-####Check null values again
-
-```r
-kable(colSums(sapply(test_cntl,is.na)))%>%
-    kable_styling(bootstrap_options = c("striped", "hover"))
-```
-
-<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
- <thead>
-  <tr>
-   <th style="text-align:left;">   </th>
-   <th style="text-align:right;"> x </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;"> Status </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> StoreCode </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> CustomerMarket </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Sales..s </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Gross.Margin..s </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> S.T.. </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> MEDIAN.HOME.VALUE </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> AGG.HOME.VALUES </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> INCOME.DENSITY </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> MEDIAN.AGE </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
-</tbody>
-</table>
 
 #### Next, I look at summary statistics for all my numeric data. I see that AGG.HOME.VALUES & INCOME.DENSITY are the total cost of all homes within a zip code. It doesn't make sense to use these variable since so much information is lost when aggregating to this level.
 <table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
@@ -354,21 +292,21 @@ test_cntl<-test_cntl%>%
 <tbody>
   <tr>
    <td style="text-align:left;"> Control </td>
-   <td style="text-align:right;"> 1736.4 </td>
-   <td style="text-align:right;"> 154160.0 </td>
-   <td style="text-align:right;"> 44494.54 </td>
-   <td style="text-align:right;"> 0.7785714 </td>
-   <td style="text-align:right;"> 190799.9 </td>
-   <td style="text-align:right;"> 41.65986 </td>
+   <td style="text-align:right;"> 1662.076 </td>
+   <td style="text-align:right;"> 153691.8 </td>
+   <td style="text-align:right;"> 44405.92 </td>
+   <td style="text-align:right;"> 0.7795238 </td>
+   <td style="text-align:right;"> 190673.3 </td>
+   <td style="text-align:right;"> 41.67211 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Test </td>
-   <td style="text-align:right;"> 1525.6 </td>
-   <td style="text-align:right;"> 148354.3 </td>
-   <td style="text-align:right;"> 42949.09 </td>
-   <td style="text-align:right;"> 0.7770000 </td>
-   <td style="text-align:right;"> 188055.4 </td>
-   <td style="text-align:right;"> 42.00000 </td>
+   <td style="text-align:right;"> 1915.800 </td>
+   <td style="text-align:right;"> 150812.4 </td>
+   <td style="text-align:right;"> 43414.37 </td>
+   <td style="text-align:right;"> 0.7720000 </td>
+   <td style="text-align:right;"> 188720.0 </td>
+   <td style="text-align:right;"> 41.93571 </td>
   </tr>
 </tbody>
 </table>
@@ -384,28 +322,28 @@ test_cntl<-test_cntl%>%
 <tbody>
   <tr>
    <td style="text-align:left;"> Sales..s </td>
-   <td style="text-align:right;"> 0.2361163 </td>
-   <td style="text-align:right;"> 0.8152561 </td>
+   <td style="text-align:right;"> 0.1219170 </td>
+   <td style="text-align:right;"> 0.9039041 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Gross.Margin..s </td>
-   <td style="text-align:right;"> 0.1727519 </td>
-   <td style="text-align:right;"> 0.8642620 </td>
+   <td style="text-align:right;"> 0.1260534 </td>
+   <td style="text-align:right;"> 0.9006142 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> S.T.. </td>
-   <td style="text-align:right;"> 0.0698221 </td>
-   <td style="text-align:right;"> 0.9448056 </td>
+   <td style="text-align:right;"> 0.2449336 </td>
+   <td style="text-align:right;"> 0.8086790 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> MEDIAN.HOME.VALUE </td>
-   <td style="text-align:right;"> 0.1379578 </td>
-   <td style="text-align:right;"> 0.8915463 </td>
+   <td style="text-align:right;"> 0.1384468 </td>
+   <td style="text-align:right;"> 0.8909148 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> MEDIAN.AGE </td>
-   <td style="text-align:right;"> -0.2101896 </td>
-   <td style="text-align:right;"> 0.8352017 </td>
+   <td style="text-align:right;"> -0.2042134 </td>
+   <td style="text-align:right;"> 0.8394865 </td>
   </tr>
 </tbody>
 </table>
