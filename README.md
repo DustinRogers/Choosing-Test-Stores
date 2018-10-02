@@ -1,14 +1,13 @@
-### Choosing Optimal Test Groups for A/B Test
+### Project Overview
 
-##### The project below shows two different methods of picking a test group and a control group for an A/B test. The company I am consulting with wants to know if sales will improve or decline if they remove a number of SKU's from the shelves of a test group of their stores.I was initially given a test group of 20 stores and told to find 20 controls stores that were similar in nature in order to have a unbiased comparison. I soon realized that after looking at the means of the pre-chosen test stores and means of the remaining 2015 stores that they were not a representative sample of the entire population. I then did two things.  
-1. I used the R package _MatchIt_ to pick the 20 stores that had the most similar distribution across all covariates in the data set to the test stores covariates and then used t-tests to determine how close their means were.
-2. I created a function in R that picks 20 test stores that are closest to the population's distribution across all covariates in the data set. This will allow the company to use 105 stores as a control group rather than only 20.
+#### The project below shows two different methods of picking a test group and a control group for an A/B test. The company I am consulting with wants to know if sales will improve or decline if they remove a number of SKU's from the shelves of a test group of their stores.I was initially given a test group of 20 stores and told to find 20 controls stores that were similar in nature in order to have a unbiased comparison. I soon realized that after looking at the means of the pre-chosen test stores and means of the remaining 2015 stores that they were not a representative sample of the entire population. I then did two things.  
+##### 1. I used the R package _MatchIt_ to pick the 20 stores that had the most similar distribution across all covariates in the data set to the test stores covariates and then used t-tests to determine how close their means were.
+##### 2. I created a function in R that picks 20 test stores that are closest to the population's distribution across all covariates in the data set. This will allow the company to use 105 stores as a control group rather than only 20.
 
 
-#### First I load the dataata and look at it's data structure
+#### First, I load the data and look at it's data structure.
 
 ```r
-setwd("C:\\Users\\user\\Documents\\Datalore Projects\\Test Control Stores\\")
 test_cntl <- read.csv("Test Control Stores.csv",stringsAsFactors=FALSE)
 str(test_cntl)
 ```
@@ -26,13 +25,16 @@ str(test_cntl)
 ##  $ Max.of.INCOME.DENSITY          : chr  "20526370" "78821928" "28587143" "52452386" ...
 ##  $ Max.of.MEDIAN.AGE              : chr  "32" "40" "28" "35" ...
 ```
-#### We can see that the naming conventions are too verbose so I will change those. Additionally, some of the columns that should have loaded as numerical variables actually loaded as character variables. This needs to be fixed in order to analyze the data.
 
 ```r
 test_cntl <- test_cntl%>%
   rename_all(.funs = funs(sub(c("*Sum.of.Customer."), "", names(test_cntl))))
 test_cntl <- test_cntl%>%
   rename_all(.funs = funs(sub(c("*Max.of."), "", names(test_cntl))))
+```
+######## We can see that the naming conventions are too verbose so I will change those. Additionally, some of the columns that should have loaded as numerical variables actually loaded as character variables. This needs to be fixed in order to analyze the data.
+
+```r
 numeric_feats <-names(test_cntl[sapply(test_cntl, function(x) length(unique(x)))>12])
 test_cntl[numeric_feats] <- lapply(test_cntl[numeric_feats], as.numeric)
 ```
@@ -87,14 +89,78 @@ test_cntl[numeric_feats] <- lapply(test_cntl[numeric_feats], as.numeric)
   </tr>
 </tbody>
 </table>
+
+```
+## Warning in is.na(test_cntl$Max.of.AGG.HOME.VALUES): is.na() applied to non-
+## (list or vector) of type 'NULL'
+```
 #### I have decided to impute the mean value for the rows null values since my data set is already so small. 
+
 ```r
 for (x in numeric_feats) {   
   mean_value <- mean(test_cntl[[x]],na.rm = TRUE)
   test_cntl[[x]][is.na(test_cntl[[x]])] <- mean_value
 }
 ```
-#### Next I look at summary statistics for all my numeric data. I see that AGG.HOME.VALUES & INCOME.DENSITY are the total cost of all homes within a zip code. 
+####Check null values again
+
+```r
+kable(colSums(sapply(test_cntl,is.na)))%>%
+    kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:right;"> x </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Status </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> StoreCode </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> CustomerMarket </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Sales..s </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Gross.Margin..s </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> S.T.. </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> MEDIAN.HOME.VALUE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> AGG.HOME.VALUES </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> INCOME.DENSITY </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> MEDIAN.AGE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+</tbody>
+</table>
+
+#### Next, I look at summary statistics for all my numeric data. I see that AGG.HOME.VALUES & INCOME.DENSITY are the total cost of all homes within a zip code. It doesn't make sense to use these variable since so much information is lost when aggregating to this level.
 <table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
  <thead>
   <tr>
@@ -155,7 +221,86 @@ for (x in numeric_feats) {
   </tr>
 </tbody>
 </table>
-#### I created a function that randomly samples 20 stores and then compares their means to the remaining means using T-Tests until all the T-Tests have P-Values of 80% of higher. I did this to make sure that test group would be a representative sample of the entire population.
+#### Now that I have a clean set of data I want to see how the means of pre chosen test group compares with the rest of the data set. It appears that the test group is not a good representation of the population.
+
+```
+## Adding missing grouping variables: `Status_2`
+```
+
+<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:left;"> Status_2 </th>
+   <th style="text-align:right;"> StoreCode </th>
+   <th style="text-align:right;"> Sales..s </th>
+   <th style="text-align:right;"> Gross.Margin..s </th>
+   <th style="text-align:right;"> S.T.. </th>
+   <th style="text-align:right;"> MEDIAN.HOME.VALUE </th>
+   <th style="text-align:right;"> MEDIAN.AGE </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Control </td>
+   <td style="text-align:right;"> 1702.248 </td>
+   <td style="text-align:right;"> 149798.8 </td>
+   <td style="text-align:right;"> 43174.90 </td>
+   <td style="text-align:right;"> 0.7713333 </td>
+   <td style="text-align:right;"> 189067.9 </td>
+   <td style="text-align:right;"> 41.37687 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Test </td>
+   <td style="text-align:right;"> 1704.900 </td>
+   <td style="text-align:right;"> 171250.5 </td>
+   <td style="text-align:right;"> 49877.23 </td>
+   <td style="text-align:right;"> 0.8150000 </td>
+   <td style="text-align:right;"> 197148.4 </td>
+   <td style="text-align:right;"> 43.48571 </td>
+  </tr>
+</tbody>
+</table>
+
+#### Next, I run a t-test for each individual variables to determine if the control and test means are equal. The variable S.T.., which represents Sales Through, is not significant at the .05 level.
+<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:left;"> x </th>
+   <th style="text-align:right;"> t_value </th>
+   <th style="text-align:right;"> p_value </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Sales..s </td>
+   <td style="text-align:right;"> -0.8351172 </td>
+   <td style="text-align:right;"> 0.4117864 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Gross.Margin..s </td>
+   <td style="text-align:right;"> -0.7488839 </td>
+   <td style="text-align:right;"> 0.4610538 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> S.T.. </td>
+   <td style="text-align:right;"> -2.1477137 </td>
+   <td style="text-align:right;"> 0.0391601 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> MEDIAN.HOME.VALUE </td>
+   <td style="text-align:right;"> -0.4229528 </td>
+   <td style="text-align:right;"> 0.6764213 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> MEDIAN.AGE </td>
+   <td style="text-align:right;"> -1.2899117 </td>
+   <td style="text-align:right;"> 0.2088940 </td>
+  </tr>
+</tbody>
+</table>
+
+
+#### I want to see if I can find a test group that represent the total population so I created a function that randomly samples 20 test stores and then compares their means to the means of the remaining stores using T-Tests until all the T-Tests have P-Values of 80% of higher. 
 
 ```r
 random.sample <- function(x) {
@@ -185,7 +330,10 @@ test_cntl<-test_cntl%>%
                             ))
 ```
 
-#### Look at difference in means between current test/control groups. The first table represents the newly picked test stores vs. the remain 105 stores. The second table represent the prechosen control and test stores.
+
+#### The first tables below shows the means between the newly selected test stores vs. the remain 105 stores. The second table shows the T-Tests of the test and control means which validate that each of the covariates' means are similar. 
+
+
 
 ```
 ## Adding missing grouping variables: `Status_3`
@@ -200,115 +348,27 @@ test_cntl<-test_cntl%>%
    <th style="text-align:right;"> Gross.Margin..s </th>
    <th style="text-align:right;"> S.T.. </th>
    <th style="text-align:right;"> MEDIAN.HOME.VALUE </th>
-   <th style="text-align:right;"> AGG.HOME.VALUES </th>
-   <th style="text-align:right;"> INCOME.DENSITY </th>
    <th style="text-align:right;"> MEDIAN.AGE </th>
   </tr>
  </thead>
 <tbody>
   <tr>
    <td style="text-align:left;"> Control </td>
-   <td style="text-align:right;"> 1672.181 </td>
-   <td style="text-align:right;"> 152303.4 </td>
-   <td style="text-align:right;"> 44191.02 </td>
-   <td style="text-align:right;"> 0.7788571 </td>
-   <td style="text-align:right;"> 190251.8 </td>
-   <td style="text-align:right;"> 112972720 </td>
-   <td style="text-align:right;"> 28014083 </td>
-   <td style="text-align:right;"> 41.67891 </td>
+   <td style="text-align:right;"> 1736.4 </td>
+   <td style="text-align:right;"> 154160.0 </td>
+   <td style="text-align:right;"> 44494.54 </td>
+   <td style="text-align:right;"> 0.7785714 </td>
+   <td style="text-align:right;"> 190799.9 </td>
+   <td style="text-align:right;"> 41.65986 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Test </td>
-   <td style="text-align:right;"> 1862.750 </td>
-   <td style="text-align:right;"> 158101.8 </td>
-   <td style="text-align:right;"> 44542.60 </td>
-   <td style="text-align:right;"> 0.7755000 </td>
-   <td style="text-align:right;"> 190933.1 </td>
-   <td style="text-align:right;"> 96766303 </td>
-   <td style="text-align:right;"> 25653027 </td>
-   <td style="text-align:right;"> 41.90000 </td>
-  </tr>
-</tbody>
-</table>
-
-```
-## Adding missing grouping variables: `Status`
-```
-
-<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
- <thead>
-  <tr>
-   <th style="text-align:left;"> Status </th>
-   <th style="text-align:right;"> StoreCode </th>
-   <th style="text-align:right;"> Sales..s </th>
-   <th style="text-align:right;"> Gross.Margin..s </th>
-   <th style="text-align:right;"> S.T.. </th>
-   <th style="text-align:right;"> MEDIAN.HOME.VALUE </th>
-   <th style="text-align:right;"> AGG.HOME.VALUES </th>
-   <th style="text-align:right;"> INCOME.DENSITY </th>
-   <th style="text-align:right;"> MEDIAN.AGE </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;"> Control </td>
-   <td style="text-align:right;"> 1586.85 </td>
-   <td style="text-align:right;"> 169811.3 </td>
-   <td style="text-align:right;"> 51806.75 </td>
-   <td style="text-align:right;"> 0.7685 </td>
-   <td style="text-align:right;"> 199948.1 </td>
-   <td style="text-align:right;"> 113067650 </td>
-   <td style="text-align:right;"> 28379723 </td>
-   <td style="text-align:right;"> 39.82143 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Test </td>
-   <td style="text-align:right;"> 1704.90 </td>
-   <td style="text-align:right;"> 171250.5 </td>
-   <td style="text-align:right;"> 49877.23 </td>
-   <td style="text-align:right;"> 0.8150 </td>
-   <td style="text-align:right;"> 197148.4 </td>
-   <td style="text-align:right;"> 134148381 </td>
-   <td style="text-align:right;"> 32921391 </td>
-   <td style="text-align:right;"> 43.48571 </td>
-  </tr>
-</tbody>
-</table>
-
-#### Next I run a t-test for each individual variables to determine if the control and test means are equal. The first table represents the newly picked test stores vs. the remain 105 stores. The second table represent the prechosen control and test stores.
-<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
- <thead>
-  <tr>
-   <th style="text-align:left;"> x </th>
-   <th style="text-align:right;"> t_value </th>
-   <th style="text-align:right;"> p_value </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;"> Sales..s </td>
-   <td style="text-align:right;"> -0.2224492 </td>
-   <td style="text-align:right;"> 0.8258371 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Gross.Margin..s </td>
-   <td style="text-align:right;"> -0.0405170 </td>
-   <td style="text-align:right;"> 0.9680014 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> S.T.. </td>
-   <td style="text-align:right;"> 0.1642415 </td>
-   <td style="text-align:right;"> 0.8705309 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> MEDIAN.HOME.VALUE </td>
-   <td style="text-align:right;"> -0.0537725 </td>
-   <td style="text-align:right;"> 0.9574705 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> MEDIAN.AGE </td>
-   <td style="text-align:right;"> -0.1235443 </td>
-   <td style="text-align:right;"> 0.9027208 </td>
+   <td style="text-align:right;"> 1525.6 </td>
+   <td style="text-align:right;"> 148354.3 </td>
+   <td style="text-align:right;"> 42949.09 </td>
+   <td style="text-align:right;"> 0.7770000 </td>
+   <td style="text-align:right;"> 188055.4 </td>
+   <td style="text-align:right;"> 42.00000 </td>
   </tr>
 </tbody>
 </table>
@@ -324,35 +384,34 @@ test_cntl<-test_cntl%>%
 <tbody>
   <tr>
    <td style="text-align:left;"> Sales..s </td>
-   <td style="text-align:right;"> -0.0429213 </td>
-   <td style="text-align:right;"> 0.9659893 </td>
+   <td style="text-align:right;"> 0.2361163 </td>
+   <td style="text-align:right;"> 0.8152561 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Gross.Margin..s </td>
-   <td style="text-align:right;"> 0.1585418 </td>
-   <td style="text-align:right;"> 0.8748715 </td>
+   <td style="text-align:right;"> 0.1727519 </td>
+   <td style="text-align:right;"> 0.8642620 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> S.T.. </td>
-   <td style="text-align:right;"> -2.1415602 </td>
-   <td style="text-align:right;"> 0.0393627 </td>
+   <td style="text-align:right;"> 0.0698221 </td>
+   <td style="text-align:right;"> 0.9448056 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> MEDIAN.HOME.VALUE </td>
-   <td style="text-align:right;"> 0.1168788 </td>
-   <td style="text-align:right;"> 0.9075914 </td>
+   <td style="text-align:right;"> 0.1379578 </td>
+   <td style="text-align:right;"> 0.8915463 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> MEDIAN.AGE </td>
-   <td style="text-align:right;"> -1.7901351 </td>
-   <td style="text-align:right;"> 0.0815000 </td>
+   <td style="text-align:right;"> -0.2101896 </td>
+   <td style="text-align:right;"> 0.8352017 </td>
   </tr>
 </tbody>
 </table>
-####Based on these results, the Sum.of.Customer.S.T.. is the only variable that has a significant difference in means at the 95% confidence level
 
+#### I still have not selected 20 control stores that best match the distribution of the pre-chosen test stores. Below are the results from the R package 'MatchIt'.
 
-#### Next, I am going to use the matchit function to determine the optimal control stores based on the test stores that have already been chosen.
 
 ```
 ## 
@@ -470,7 +529,9 @@ test_cntl<-test_cntl%>%
 ## Unmatched      65       0
 ## Discarded       0       0
 ```
-#### With the new control groups given by the above matchit model, I used a t-test for each variable to determine if the control and test means were equal.
+
+
+#### With the new control groups given by the above matchit model, I used a t-test for each variable to determine if the control and test means were equal. 
 <table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
  <thead>
   <tr>
