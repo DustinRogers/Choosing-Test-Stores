@@ -5,7 +5,7 @@
 ##### 2. I created a function in R that picks 20 test stores that are closest to the population's distribution across all covariates in the data set. This will allow the company to use 105 stores as a control group rather than only 20.
 
 
-#### First, I load the data and look at it's data structure.
+##### First, I load the data and look at it's data structure.
 
 ```r
 test_cntl <- read.csv("Test Control Stores.csv",stringsAsFactors=FALSE)
@@ -32,13 +32,13 @@ test_cntl <- test_cntl%>%
 test_cntl <- test_cntl%>%
   rename_all(.funs = funs(sub(c("*Max.of."), "", names(test_cntl))))
 ```
-#### We can see that the naming conventions are too verbose so I will change those. Additionally, some of the columns that should have loaded as numerical variables actually loaded as character variables. This needs to be fixed in order to analyze the data.
+##### We can see that the naming conventions are too verbose so I will change those. Additionally, some of the columns that should have loaded as numerical variables actually loaded as character variables. This needs to be fixed in order to analyze the data.
 
 ```r
 numeric_feats <-names(test_cntl[sapply(test_cntl, function(x) length(unique(x)))>12])
 test_cntl[numeric_feats] <- lapply(test_cntl[numeric_feats], as.numeric)
 ```
-#### Next,  I check to see if the data has any null values. I see that there are 6 rows that are all missing demographic data.
+##### Next,  I check to see if the data has any null values. I see that there are 6 rows that are all missing demographic data.
 <table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
  <thead>
   <tr>
@@ -89,7 +89,7 @@ test_cntl[numeric_feats] <- lapply(test_cntl[numeric_feats], as.numeric)
   </tr>
 </tbody>
 </table>
-#### I have decided to impute the mean value for the rows null values since my data set is already so small. 
+##### I have decided to impute the mean value for the rows null values since my data set is already so small. 
 
 ```r
 for (x in numeric_feats) {   
@@ -98,7 +98,7 @@ for (x in numeric_feats) {
 }
 ```
 
-#### Next, I look at summary statistics for all my numeric data. I see that AGG.HOME.VALUES & INCOME.DENSITY are the total cost of all homes within a zip code. It doesn't make sense to use these variable since so much information is lost when aggregating to this level.
+##### Next, I look at summary statistics for all my numeric data. I see that AGG.HOME.VALUES & INCOME.DENSITY are the total cost of all homes within a zip code. It doesn't make sense to use these variable since so much information is lost when aggregating to this level.
 <table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
  <thead>
   <tr>
@@ -159,7 +159,7 @@ for (x in numeric_feats) {
   </tr>
 </tbody>
 </table>
-#### Now that I have a clean set of data I want to see how the means of pre chosen test group compares with the rest of the data set. It appears that the test group is not a good representation of the population.
+##### Now that I have a clean set of data, I want to see how the means of pre-chosen test group compares with the rest of the data set. Based on the difference in the average sales and gross margin between the two cohorts, it appears that the test group is not a good representation of the population.
 
 ```
 ## Adding missing grouping variables: `Status_2`
@@ -238,7 +238,7 @@ for (x in numeric_feats) {
 </table>
 
 
-#### I want to see if I can find a test group that represent the total population so I created a function that randomly samples 20 test stores and then compares their means to the means of the remaining stores using T-Tests until all the T-Tests have P-Values of 80% of higher. 
+##### Since I believe that the experiment design is flawed by pre-choosing 20 stores without any statistical evidence based on the evidence above I decided to see if I can find a test cohort of 20 stores that represent the total population. Therefore, I created a function that randomly samples 20 test stores and then compares their means to the means of the remaining stores using T-Tests until all the T-Tests have P-Values of 80% of higher. 
 
 ```r
 random.sample <- function(x) {
@@ -469,7 +469,7 @@ test_cntl<-test_cntl%>%
 ```
 
 
-#### With the new control groups given by the above matchit model, I used a t-test for each variable to determine if the control and test means were equal. 
+##### With the new control groups given by the above matchit model, I used a t-test for each variable to determine if the control and test means were equal. 
 <table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
  <thead>
   <tr>
@@ -507,7 +507,7 @@ test_cntl<-test_cntl%>%
 </tbody>
 </table>
 
-#### Based on the results of the two methods of choosing Test and Control groups, I recommended that the company randomly select 20 test groups and make sure that they are a representive sample of the entire population. This would help ensure that there wasn't any bias and also allow them to use more stores in the control group for a more robust study.
+##### Based on the results of the two methods used in this markup, I recommended that the company randomly select 20 test groups and make sure that they are a representive sample of the entire population. This would help ensure that there wasn't any bias in the analysis of their results and also allow them to use more stores in the control group for a more robust study.
 
 [Return to my portfolio](https://dustinrogers.github.io/)
 
