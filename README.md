@@ -508,3 +508,6 @@ test_cntl<-test_cntl%>%
 </table>
 
 #### Based on the results of the two methods of choosing Test and Control groups, I recommended that the company randomly select 20 test groups and make sure that they are a representive sample of the entire population. This would help ensure that there wasn't any bias and also allow them to use more stores in the control group for a more robust study.
+
+[Return to my portfolio](https://dustinrogers.github.io/)
+
