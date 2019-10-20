@@ -1,5 +1,5 @@
 ---
-layout: splash
+layout: single
 classes: wide
 ---
 remote_theme: DustinRogers/minimal-mistakes
