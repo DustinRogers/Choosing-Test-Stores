@@ -1,16 +1,6 @@
 remote_theme: DustinRogers/minimal-mistakes
 minimal_mistakes_skin: "mint" # "air", "aqua", "contrast", "dark", "dirt", "neon", "mint", "plum" "sunrise"
-# Defaults
-defaults:
-  # _posts
-  - scope:
-      path: ""
-      type: posts
-    values:
-      layout: single
-      classes: wide
-      author_profile: true
-      read_time: true
-      comments: # true
-      share: true
-      related: true
+---
+layout: single
+classes: wide
+---
