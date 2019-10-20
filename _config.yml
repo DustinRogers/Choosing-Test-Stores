@@ -1,3 +1,5 @@
+remote_theme: DustinRogers/minimal-mistakes
+
 defaults:
   # _posts
   - scope:
