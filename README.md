@@ -1,3 +1,8 @@
+---
+layout: post
+title: Blogging Like a Hacker
+---
+
 ### Project Overview
 
 #### The project below shows two different methods of picking a test group and a control group for an A/B test. The company I am consulting with wants to know if sales will improve or decline if they remove a number of SKU's from the shelves of a test group of their stores.I was initially given a test group of 20 stores and told to find 20 controls stores that were similar in nature in order to have a unbiased comparison. By comparing the average Sales and Gross Margins of the pre-chosen stores with the averages of the remaining 105 stores I could see that they were not a representative sample of the entire population. The following shows how I approached this problem.  
