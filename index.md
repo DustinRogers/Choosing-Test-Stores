@@ -1,14 +1,15 @@
 ---
 classes: wide
 title: " "
-excerpt: Welcome to my GitHub portfolio!
+excerpt: How to choose unbiased testing and control samples
 header:
   overlay_image: /assets/images/Header.jpg  
 ---
 
 ### Project Overview
 
-#### The project below shows two different methods of picking a test group and a control group for an A/B test. The company I am consulting with wants to know if sales will improve or decline if they remove a number of SKU's from the shelves of a test group of their stores.I was initially given a test group of 20 stores and told to find 20 controls stores that were similar in nature in order to have a unbiased comparison. By comparing the average Sales and Gross Margins of the pre-chosen stores with the averages of the remaining 105 stores I could see that they were not a representative sample of the entire population. The following shows how I approached this problem.  
+#### The project below shows two different methods of picking sample groups for an A/B test. The company I am consulting with wants to know if sales will improve or decline if they remove a number of SKU's from the shelves of a test group of their stores. Initially, the company gave me a test group of 20 stores and asked me to find 20 controls stores that were similar in nature so that they could compared run their experiment and compare results. By comparing the average Sales and Gross Margins of the pre-chosen stores with the averages of the remaining 105 stores I could see that they were not a representative sample of the entire population. The following shows how I approached this problem of choosing unbiased samples.  
+
 ##### 1. I used the R package _MatchIt_ to pick the 20 stores that had the most similar distribution across all covariates in the data set to the test stores covariates and then used t-tests to determine how close their means were.
 ##### 2. I created a function in R that picks 20 test stores that are closest to the population's distribution across all covariates in the data set. This will allow the company to use 105 stores as a control group rather than only 20.
 
