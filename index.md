@@ -13,7 +13,7 @@ header:
 ##### 1. I used the R package _MatchIt_ to pick the 20 stores that had the most similar distribution across all covariates in the data set to the test stores covariates and then used t-tests to determine how close their means were.
 ##### 2. I created a function in R that picks 20 test stores that are closest to the population's distribution across all covariates in the data set. This will allow the company to use 105 stores as a control group rather than only 20.
 
-
+### Data Wrangling
 ##### First, I load the data and look at it's data structure.
 
 ```r
@@ -98,7 +98,7 @@ test_cntl[numeric_feats] <- lapply(test_cntl[numeric_feats], as.numeric)
   </tr>
 </tbody>
 </table>
-##### I have decided to impute the mean value for the rows null values since my data set is already so small. 
+##### Since my data set is very small I can't afford to lose any data. Therefore, I have decided to impute the mean value for the rows null values . 
 
 ```r
 for (x in numeric_feats) {   
@@ -108,6 +108,7 @@ for (x in numeric_feats) {
 ```
 
 ##### Next, I look at summary statistics for all my numeric data. I see that AGG.HOME.VALUES & INCOME.DENSITY are the total cost of all homes within a zip code. It doesn't make sense to use these variable since so much information is lost when aggregating to this level.
+
 <table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
  <thead>
   <tr>
@@ -168,11 +169,8 @@ for (x in numeric_feats) {
   </tr>
 </tbody>
 </table>
-##### Now that I have a clean set of data, I want to see how the means of pre-chosen test group compares with the rest of the data set. Based on the difference in the average sales and gross margin between the two cohorts, it appears that the test group is not a good representation of the population.
 
-```
-## Adding missing grouping variables: `Status_2`
-```
+##### Now that I have a clean set of data, I want to see how the means of pre-chosen test group compares with the rest of the data set. Based on the difference in the average sales and gross margin between the two cohorts, it appears that the pre-chosen test group is not a good representation of the population.
 
 <table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
  <thead>
@@ -208,7 +206,8 @@ for (x in numeric_feats) {
 </tbody>
 </table>
 
-#### Next, I run a t-test for each individual variables to determine if the control and test means are equal. The variable S.T.., which represents Sales Through, is not significant at the .05 level.
+#### In order to test my hypothesis I ran a t-test for each individual variables to determine if the control and test means are equal. The variable S.T.., which represents Sales Through, is not significant at the .05 level. However, I cannot reject my null hypothesis that Sales and Gross Margin are equal between the control and test sets.
+
 <table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
  <thead>
   <tr>
@@ -247,7 +246,7 @@ for (x in numeric_feats) {
 </table>
 
 
-##### Since I believe that the experiment design is flawed by pre-choosing 20 stores without any statistical evidence based on the evidence above I decided to see if I can find a test cohort of 20 stores that represent the total population. Therefore, I created a function that randomly samples 20 test stores and then compares their means to the means of the remaining stores using T-Tests until all the T-Tests have P-Values of 80% of higher. 
+##### I would still like to see if I can create a better samples for running this experiment. Therefore, I created a function that randomly samples 20 test stores and then compares their means to the means of the remaining 105 stores using T-Tests until all the T-Tests have P-Values of 80% of higher. 
 
 ```r
 random.sample <- function(x) {
@@ -278,13 +277,7 @@ test_cntl<-test_cntl%>%
 ```
 
 
-#### The first tables below shows the means between the newly selected test stores vs. the remain 105 stores. The second table shows the T-Tests of the test and control means which validate that each of the covariates' means are similar. 
-
-
-
-```
-## Adding missing grouping variables: `Status_3`
-```
+#### The first tables below shows the means between the newly selected test stores vs. the remain 105 stores. The second table shows the T-Tests of the test and control samples which validate that each of the covariates' means are similar. 
 
 <table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
  <thead>
@@ -358,7 +351,6 @@ test_cntl<-test_cntl%>%
 </table>
 
 #### I still have not selected 20 control stores that best match the distribution of the pre-chosen test stores. Below are the results from the R package 'MatchIt'.
-
 
 ```
 ## 
